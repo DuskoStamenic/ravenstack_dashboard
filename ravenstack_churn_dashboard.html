@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RavenStack — Churn Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e28;
+    --border: #252936;
+    --accent: #e8ff47;
+    --accent2: #ff6b47;
+    --accent3: #47c4ff;
+    --text: #f0f2f8;
+    --muted: #6b7280;
+    --danger: #ff4757;
+    --success: #2ed573;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  /* Subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,71,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,71,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    flex-shrink: 0;
+  }
+
+  .brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .brand span { color: var(--accent); }
+
+  .header-meta {
+    text-align: right;
+  }
+
+  .header-meta .title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .header-meta .period {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* KPI strip */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .kpi.yellow::before { background: var(--accent); }
+  .kpi.red::before { background: var(--danger); }
+  .kpi.blue::before { background: var(--accent3); }
+  .kpi.orange::before { background: var(--accent2); }
+  .kpi.green::before { background: var(--success); }
+
+  .kpi-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .kpi-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* Grid layout */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .grid-32 {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .grid-23 {
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .card-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* Timeline chart */
+  .timeline-chart {
+    height: 140px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    padding-top: 8px;
+  }
+
+  .bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .bar {
+    width: 100%;
+    background: var(--accent);
+    opacity: 0.85;
+    transition: opacity 0.2s;
+    min-height: 2px;
+    position: relative;
+    animation: growUp 0.6s ease both;
+  }
+
+  .bar:hover { opacity: 1; }
+
+  .bar-label {
+    font-size: 8px;
+    color: var(--muted);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 100%;
+  }
+
+  .bar-tooltip {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+  }
+
+  .bar:hover .bar-tooltip { opacity: 1; }
+
+  /* Donut chart */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .donut-svg { flex-shrink: 0; }
+
+  .donut-legend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .legend-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+  }
+
+  .legend-name { color: var(--text); font-size: 11px; }
+
+  .legend-count {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .legend-pct {
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+
+  /* Horizontal bar */
+  .hbar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .hbar-item {}
+
+  .hbar-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .hbar-label { font-size: 11px; color: var(--text); }
+  .hbar-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .hbar-track {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  .hbar-fill {
+    height: 100%;
+    animation: growRight 0.8s ease both;
+  }
+
+  /* Stacked indicator */
+  .flag-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .flag-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 16px;
+    position: relative;
+  }
+
+  .flag-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .flag-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+  }
+
+  .flag-pct {
+    font-size: 11px;
+    margin-top: 8px;
+  }
+
+  /* Scatter/bubble viz */
+  .reason-feedback-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+
+  .rf-col-header {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .rf-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    position: relative;
+    cursor: default;
+    transition: transform 0.15s;
+  }
+
+  .rf-cell:hover { transform: scale(1.05); z-index: 2; }
+
+  .rf-cell .rf-tooltip {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    font-size: 9px;
+    padding: 3px 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 10;
+  }
+
+  .rf-cell:hover .rf-tooltip { opacity: 1; }
+
+  /* Refund distribution */
+  .refund-stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .refund-stat {
+    flex: 1;
+    text-align: center;
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .refund-stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .refund-stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Trend indicator */
+  .trend-up { color: var(--danger); }
+  .trend-down { color: var(--success); }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes growUp {
+    from { transform: scaleY(0); transform-origin: bottom; }
+    to { transform: scaleY(1); transform-origin: bottom; }
+  }
+
+  @keyframes growRight {
+    from { transform: scaleX(0); transform-origin: left; }
+    to { transform: scaleX(1); transform-origin: left; }
+  }
+
+  .card:nth-child(1) { animation-delay: 0.05s; }
+  .card:nth-child(2) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.15s; }
+  .kpi:nth-child(1) { animation-delay: 0.0s; }
+  .kpi:nth-child(2) { animation-delay: 0.05s; }
+  .kpi:nth-child(3) { animation-delay: 0.1s; }
+  .kpi:nth-child(4) { animation-delay: 0.15s; }
+  .kpi:nth-child(5) { animation-delay: 0.2s; }
+
+  /* Row headers for matrix */
+  .matrix-wrap {
+    overflow-x: auto;
+  }
+
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .matrix-table th {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 6px 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+
+  .matrix-table th:first-child { text-align: left; }
+
+  .matrix-table td {
+    padding: 6px 10px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .matrix-table td:first-child {
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .heat-cell {
+    border-radius: 0;
+    display: inline-block;
+    width: 36px;
+    height: 26px;
+    line-height: 26px;
+    text-align: center;
+  }
+
+  .month-sparkline {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 30px;
+    margin-top: 8px;
+  }
+
+  .spark-bar {
+    flex: 1;
+    background: var(--accent);
+    opacity: 0.6;
+    min-height: 2px;
+    transition: opacity 0.2s;
+  }
+
+  .spark-bar:hover { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo">
+      <div class="logo-mark"></div>
+      <div>
+        <div class="brand">Raven<span>Stack</span></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">churn intelligence</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="title">Churn Event Analysis</div>
+      <div class="period">Jan 2023 – Dec 2024 · 600 events</div>
+    </div>
+  </header>
+
+  <!-- KPI Strip -->
+  <div class="kpi-strip">
+    <div class="kpi yellow">
+      <div class="kpi-label">Total Churns</div>
+      <div class="kpi-value" style="color:var(--accent)">600</div>
+      <div class="kpi-sub">↑ 117 in Dec 2024 alone</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Refunds Issued</div>
+      <div class="kpi-value" style="color:var(--danger)">$8,652</div>
+      <div class="kpi-sub">142 events · avg $60.93</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Reactivations</div>
+      <div class="kpi-value" style="color:var(--accent3)">61</div>
+      <div class="kpi-sub">10.2% of all churns</div>
+    </div>
+    <div class="kpi orange">
+      <div class="kpi-label">Top Reason</div>
+      <div class="kpi-value" style="color:var(--accent2);font-size:22px;">Features</div>
+      <div class="kpi-sub">114 events · 19.0%</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Pre-Upgrade Churns</div>
+      <div class="kpi-value" style="color:var(--success)">123</div>
+      <div class="kpi-sub">20.5% had upgrade before</div>
+    </div>
+  </div>
+
+  <!-- Row 1: Timeline + Reason Donut -->
+  <div class="grid-32">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Monthly Churn Volume</span>
+        <span class="card-badge">Jan 2023 – Dec 2024</span>
+      </div>
+      <div class="timeline-chart" id="timeline"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;">
+        <span style="font-size:9px;color:var(--muted)">Jan '23</span>
+        <span style="font-size:9px;color:var(--muted)">Dec '24</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Churn by Reason</span>
+        <span class="card-badge">6 categories</span>
+      </div>
+      <div class="donut-wrap">
+        <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110" id="donut"></svg>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Feedback + Flags + Refund -->
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Feedback Text</span>
+        <span class="card-badge">452 responses</span>
+      </div>
+      <div class="hbar-list">
+        <div class="hbar-item">
+          <div class="hbar-meta">
+            <span class="hbar-label">Too Expensive</span>
+            <span class="hbar-val" style="color:var(--danger)">161</span>
+          </div>
+          <div class="hbar-track">
+            <div class="hbar-fill" style="width:100%;background:var(--danger)"></div>
+          </div>
+        </div>
+        <div class="hbar-item">
+          <div class="hbar-meta">
+            <span class="hbar-label">Missing Features</span>
+            <span class="hbar-val" style="color:var(--accent2)">155</span>
+          </div>
+          <div class="hbar-track">
+            <div class="hbar-fill" style="width:96.3%;background:var(--accent2)"></div>
+          </div>
+        </div>
+        <div class="hbar-item">
+          <div class="hbar-meta">
+            <span class="hbar-label">Switched to Competitor</span>
+            <span class="hbar-val" style="color:var(--accent3)">136</span>
+          </div>
+          <div class="hbar-track">
+            <div class="hbar-fill" style="width:84.5%;background:var(--accent3)"></div>
+          </div>
+        </div>
+        <div class="hbar-item" style="margin-top:8px;padding-top:12px;border-top:1px solid var(--border)">
+          <div class="hbar-meta">
+            <span class="hbar-label" style="color:var(--muted)">No feedback given</span>
+            <span class="hbar-val" style="color:var(--muted)">148</span>
+          </div>
+          <div class="hbar-track">
+            <div class="hbar-fill" style="width:24.7%;background:var(--muted)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Pre-Churn Signals</span>
+        <span class="card-badge">account flags</span>
+      </div>
+      <div class="flag-grid">
+        <div class="flag-box">
+          <div class="flag-num" style="color:var(--success)">123</div>
+          <div class="flag-label">Preceded by Upgrade</div>
+          <div class="flag-pct" style="color:var(--success)">20.5%</div>
+        </div>
+        <div class="flag-box">
+          <div class="flag-num" style="color:var(--accent2)">53</div>
+          <div class="flag-label">Preceded by Downgrade</div>
+          <div class="flag-pct" style="color:var(--accent2)">8.8%</div>
+        </div>
+        <div class="flag-box">
+          <div class="flag-num" style="color:var(--accent3)">61</div>
+          <div class="flag-label">Reactivations</div>
+          <div class="flag-pct" style="color:var(--accent3)">10.2%</div>
+        </div>
+        <div class="flag-box">
+          <div class="flag-num" style="color:var(--muted)">363</div>
+          <div class="flag-label">No Prior Signal</div>
+          <div class="flag-pct" style="color:var(--muted)">60.5%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Refund Overview</span>
+        <span class="card-badge">$8,652 total</span>
+      </div>
+      <div class="refund-stats">
+        <div class="refund-stat">
+          <div class="refund-stat-val" style="color:var(--danger)">$8,652</div>
+          <div class="refund-stat-label">Total issued</div>
+        </div>
+        <div class="refund-stat">
+          <div class="refund-stat-val" style="color:var(--accent2)">$60.93</div>
+          <div class="refund-stat-label">Avg (when issued)</div>
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div class="hbar-meta">
+          <span class="hbar-label">Events with refund</span>
+          <span class="hbar-val" style="color:var(--accent)">142</span>
+        </div>
+        <div class="hbar-track" style="height:6px;">
+          <div class="hbar-fill" style="width:23.7%;background:var(--accent)"></div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);margin-top:3px;">23.7% of all churn events</div>
+      </div>
+      <div>
+        <div class="hbar-meta">
+          <span class="hbar-label">Zero-refund churns</span>
+          <span class="hbar-val" style="color:var(--muted)">458</span>
+        </div>
+        <div class="hbar-track" style="height:6px;">
+          <div class="hbar-fill" style="width:76.3%;background:var(--muted);opacity:0.4"></div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);margin-top:3px;">76.3% of all churn events</div>
+      </div>
+
+      <!-- Refund by reason -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;">Refund rate by reason</div>
+        <div id="refund-by-reason"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Reason × Feedback Matrix + Trend table -->
+  <div class="grid-23">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Reason × Feedback Heatmap</span>
+        <span class="card-badge">cross-tab</span>
+      </div>
+      <div class="matrix-wrap">
+        <table class="matrix-table" id="heatmap"></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Quarterly Trend</span>
+        <span class="card-badge">7 quarters</span>
+      </div>
+      <table class="matrix-table" id="qtable"></table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const monthlyData = [
+  {m:'Jan\'23',n:1},{m:'Feb',n:0},{m:'Mar',n:5},{m:'Apr',n:3},{m:'May',n:3},{m:'Jun',n:5},
+  {m:'Jul',n:6},{m:'Aug',n:7},{m:'Sep',n:6},{m:'Oct',n:10},{m:'Nov',n:11},{m:'Dec',n:16},
+  {m:'Jan\'24',n:20},{m:'Feb',n:10},{m:'Mar',n:24},{m:'Apr',n:25},{m:'May',n:27},{m:'Jun',n:40},
+  {m:'Jul',n:35},{m:'Aug',n:42},{m:'Sep',n:53},{m:'Oct',n:66},{m:'Nov',n:68},{m:'Dec',n:117}
+];
+
+const reasons = [
+  {label:'Features',   n:114, color:'#e8ff47'},
+  {label:'Budget',     n:104, color:'#47c4ff'},
+  {label:'Support',    n:104, color:'#ff6b47'},
+  {label:'Unknown',    n:95,  color:'#a78bfa'},
+  {label:'Pricing',    n:91,  color:'#2ed573'},
+  {label:'Competitor', n:92,  color:'#ff4757'},
+];
+
+const feedbackLabels = ['Too Expensive','Missing Features','Switched to Competitor','(no feedback)'];
+
+// Cross-tab counts [reason][feedback]
+// Computed from raw data analysis
+const crossTab = {
+  'Features':    {'Too Expensive':17,'Missing Features':49,'Switched to Competitor':23,'(no feedback)':25},
+  'Budget':      {'Too Expensive':47,'Missing Features':24,'Switched to Competitor':17,'(no feedback)':16},
+  'Support':     {'Too Expensive':26,'Missing Features':28,'Switched to Competitor':26,'(no feedback)':24},
+  'Unknown':     {'Too Expensive':26,'Missing Features':24,'Switched to Competitor':21,'(no feedback)':24},
+  'Pricing':     {'Too Expensive':31,'Missing Features':16,'Switched to Competitor':28,'(no feedback)':16},
+  'Competitor':  {'Too Expensive':14,'Missing Features':14,'Switched to Competitor':21,'(no feedback)':43},
+};
+
+const refundByReason = [
+  {label:'Support',    rate:32, color:'#ff6b47'},
+  {label:'Budget',     rate:28, color:'#47c4ff'},
+  {label:'Pricing',    rate:26, color:'#2ed573'},
+  {label:'Features',   rate:22, color:'#e8ff47'},
+  {label:'Competitor', rate:18, color:'#ff4757'},
+  {label:'Unknown',    rate:16, color:'#a78bfa'},
+];
+
+const quarterlyData = [
+  {q:'Q1 2023', n:6,  change:null},
+  {q:'Q2 2023', n:14, change:133},
+  {q:'Q3 2023', n:19, change:36},
+  {q:'Q4 2023', n:37, change:95},
+  {q:'Q1 2024', n:54, change:46},
+  {q:'Q2 2024', n:102,change:89},
+  {q:'Q3 2024', n:130,change:27},
+  {q:'Q4 2024', n:251,change:93},
+];
+
+// ── TIMELINE ─────────────────────────────────────────────────────────────────
+const tlEl = document.getElementById('timeline');
+const maxN = Math.max(...monthlyData.map(d=>d.n));
+monthlyData.forEach((d,i) => {
+  const pct = d.n / maxN * 100;
+  const col = document.createElement('div');
+  col.className = 'bar-group';
+  col.innerHTML = `
+    <div class="bar" style="height:${pct}%;animation-delay:${i*0.03}s">
+      <div class="bar-tooltip">${d.m}: ${d.n}</div>
+    </div>
+    <div class="bar-label">${d.m.includes('\'') ? d.m : ''}</div>
+  `;
+  tlEl.appendChild(col);
+});
+
+// ── DONUT ─────────────────────────────────────────────────────────────────────
+const svg = document.getElementById('donut');
+const total = reasons.reduce((a,b)=>a+b.n,0);
+const cx=55,cy=55,r=40,inner=24;
+let startAngle = -Math.PI/2;
+reasons.forEach(item => {
+  const angle = (item.n/total) * Math.PI*2;
+  const endAngle = startAngle + angle;
+  const x1=cx+r*Math.cos(startAngle), y1=cy+r*Math.sin(startAngle);
+  const x2=cx+r*Math.cos(endAngle),   y2=cy+r*Math.sin(endAngle);
+  const ix1=cx+inner*Math.cos(startAngle), iy1=cy+inner*Math.sin(startAngle);
+  const ix2=cx+inner*Math.cos(endAngle),   iy2=cy+inner*Math.sin(endAngle);
+  const large = angle > Math.PI ? 1 : 0;
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',`M${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${ix2},${iy2} A${inner},${inner} 0 ${large},0 ${ix1},${iy1} Z`);
+  path.setAttribute('fill', item.color);
+  path.style.opacity = '0.9';
+  svg.appendChild(path);
+  startAngle = endAngle;
+});
+// center label
+const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+txt.setAttribute('x',cx); txt.setAttribute('y',cy+4);
+txt.setAttribute('text-anchor','middle');
+txt.setAttribute('fill','#f0f2f8');
+txt.setAttribute('font-size','13');
+txt.setAttribute('font-family','Syne, sans-serif');
+txt.setAttribute('font-weight','800');
+txt.textContent='600';
+svg.appendChild(txt);
+
+const legend = document.getElementById('donut-legend');
+reasons.forEach(item => {
+  legend.innerHTML += `
+    <div class="legend-item">
+      <div class="legend-left">
+        <div class="legend-dot" style="background:${item.color}"></div>
+        <span class="legend-name">${item.label}</span>
+      </div>
+      <div>
+        <span class="legend-count">${item.n}</span>
+        <span class="legend-pct">${(item.n/total*100).toFixed(0)}%</span>
+      </div>
+    </div>`;
+});
+
+// ── REFUND BY REASON ─────────────────────────────────────────────────────────
+const rbrEl = document.getElementById('refund-by-reason');
+refundByReason.forEach(item => {
+  rbrEl.innerHTML += `
+    <div style="margin-bottom:7px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+        <span style="font-size:10px;color:var(--text)">${item.label}</span>
+        <span style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:${item.color}">${item.rate}%</span>
+      </div>
+      <div class="hbar-track">
+        <div class="hbar-fill" style="width:${item.rate/32*100}%;background:${item.color}"></div>
+      </div>
+    </div>`;
+});
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────────
+const hmTable = document.getElementById('heatmap');
+const reasonKeys = Object.keys(crossTab);
+const fbKeys = feedbackLabels;
+const allVals = reasonKeys.flatMap(r=>fbKeys.map(f=>crossTab[r][f]));
+const hmMax = Math.max(...allVals);
+
+let thead = '<thead><tr><th></th>';
+fbKeys.forEach(f=>{ thead += `<th>${f}</th>`; });
+thead += '</tr></thead>';
+
+let tbody = '<tbody>';
+reasonKeys.forEach(r => {
+  tbody += `<tr><td>${r}</td>`;
+  fbKeys.forEach(f => {
+    const v = crossTab[r][f];
+    const intensity = v/hmMax;
+    const alpha = 0.15 + intensity * 0.75;
+    const reasonColor = reasons.find(x=>x.label===r)?.color || '#e8ff47';
+    const hex = reasonColor.replace('#','');
+    const bigR = parseInt(hex.substring(0,2),16);
+    const bigG = parseInt(hex.substring(2,4),16);
+    const bigB = parseInt(hex.substring(4,6),16);
+    tbody += `<td>
+      <span class="heat-cell" style="background:rgba(${bigR},${bigG},${bigB},${alpha});color:${intensity>0.5?'#0d0f14':'var(--text)'}">${v}</span>
+    </td>`;
+  });
+  tbody += '</tr>';
+});
+tbody += '</tbody>';
+hmTable.innerHTML = thead + tbody;
+
+// ── QUARTERLY TABLE ──────────────────────────────────────────────────────────
+const qt = document.getElementById('qtable');
+let qhtml = `<thead><tr>
+  <th style="text-align:left">Quarter</th>
+  <th>Events</th>
+  <th>vs prev</th>
+  <th>Sparkline</th>
+</tr></thead><tbody>`;
+
+const qMax = Math.max(...quarterlyData.map(d=>d.n));
+quarterlyData.forEach((d,i)=>{
+  const bar = `<div class="month-sparkline" style="height:20px;margin:0;">
+    <div style="flex:1;background:var(--accent);opacity:0.7;height:${d.n/qMax*100}%;align-self:flex-end;min-height:2px;"></div>
+  </div>`;
+  const chg = d.change !== null
+    ? `<span class="${d.change>50?'trend-up':''}">↑${d.change}%</span>`
+    : `<span style="color:var(--muted)">—</span>`;
+  const highlight = d.q==='Q4 2024' ? 'background:rgba(232,255,71,0.05);' : '';
+  qhtml += `<tr style="${highlight}">
+    <td>${d.q}</td>
+    <td style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accent)">${d.n}</td>
+    <td style="font-size:11px;">${chg}</td>
+    <td>
+      <div style="width:80px;height:16px;display:flex;align-items:flex-end;gap:1px;">
+        ${quarterlyData.slice(0,i+1).map(x=>`<div style="flex:1;background:var(--accent);opacity:0.5;height:${x.n/qMax*100}%;min-height:2px;"></div>`).join('')}
+      </div>
+    </td>
+  </tr>`;
+});
+qhtml += '</tbody>';
+qt.innerHTML = qhtml;
+</script>
+</body>
+</html>

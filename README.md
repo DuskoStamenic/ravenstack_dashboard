@@ -1,4 +1,4 @@
-# ravenstack_dashboard
+# Ravenstack Dashboard
 
 A SaaS churn analytics dashboard built as a personal learning project, exploring two years of subscription and churn data through Python, Pandas, Plotly, and Streamlit. The full long-form write-up lives on the author's blog — this repository is the working code, data, and exported artifacts.
 

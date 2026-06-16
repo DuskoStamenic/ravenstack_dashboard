@@ -39,12 +39,6 @@ ravenstack_churn_review.pptx      PowerPoint version of slides
 Images/                           Assets
 ```
 
-## Getting Started
-
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
 
 ## Design Notes
 
